@@ -1,19 +1,15 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { google } = require('googleapis');
-const qrcode = require('qrcode');
-const qrcodeTerminal = require('qrcode-terminal');
-const express = require('express');
 const fs = require('fs');
+const express = require('express');
 
 const app = express();
-const port = process.env.PORT || 10000;
+app.get('/', (_, res) => res.send('Bot is live ✅'));
+app.listen(10000, () => console.log("🚀 Server is listening on port 10000"));
 
-// Google Sheets auth from .env
-const credsBase64 = process.env.CREDS_BASE64;
-const credsJson = Buffer.from(credsBase64, 'base64').toString('utf8');
-const credentials = JSON.parse(credsJson);
+// 👇 LOCAL: Read from credentials.json
+const credentials = JSON.parse(fs.readFileSync('credentials.json', 'utf-8'));
 
-// Setup Google Sheets
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const auth = new google.auth.JWT(
   credentials.client_email,
@@ -22,45 +18,26 @@ const auth = new google.auth.JWT(
   SCOPES
 );
 const sheets = google.sheets({ version: 'v4', auth });
-const SPREADSHEET_ID = '1kzRUlafAHKovzyReVAUkk5lmbik36VYP1Ao_pQiezMQ'; // Replace with your actual Google Sheet ID
 
-// Initialize WhatsApp
+const SPREADSHEET_ID = 'YOUR_SHEET_ID_HERE'; // Replace with your actual Google Sheet ID
+
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  },
+    headless: false, // change to true if you don’t want to see the browser
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  }
 });
-
-// Global QR for web preview
-let qrCode = '';
 
 client.on('qr', (qr) => {
-  qrCode = qr;
-  qrcodeTerminal.generate(qr, { small: true });
   console.log('📱 Scan this QR code with your WhatsApp:');
+  require('qrcode-terminal').generate(qr, { small: true });
 });
 
-// Serve QR code as image in browser
-app.get('/', async (req, res) => {
-  if (!qrCode) return res.send('QR not ready yet. Please wait...');
-  const qrImage = await qrcode.toDataURL(qrCode);
-  res.send(`<h2>📱 Scan this QR with WhatsApp:</h2><img src="${qrImage}" />`);
-});
-
-// Start express server
-app.listen(port, () => {
-  console.log(`✅ Server is listening on port ${port}`);
-  console.log(`🚀 Your service is live: http://localhost:${port}`);
-});
-
-// On ready
 client.on('ready', () => {
   console.log('✅ WhatsApp bot is ready!');
 });
 
-// On new message
 client.on('message', async (msg) => {
   try {
     const phoneNumber = msg.from;
@@ -76,13 +53,13 @@ client.on('message', async (msg) => {
       range: 'Sheet1!A:C',
       valueInputOption: 'RAW',
       requestBody: {
-        values: [[timestamp, phoneNumber, message]],
-      },
+        values: [[timestamp, phoneNumber, message]]
+      }
     });
 
-    console.log('✅ Saved to Google Sheets!');
-  } catch (error) {
-    console.error('❌ Error saving to Google Sheets:', error);
+    console.log('✅ Message saved to Google Sheets');
+  } catch (err) {
+    console.error('❌ Failed to save to Google Sheets:', err);
   }
 });
 
