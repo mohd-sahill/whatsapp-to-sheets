@@ -1,14 +1,43 @@
+// index.js
+
+require('dotenv').config(); // Load .env locally (safe in development)
+
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { google } = require('googleapis');
+const express = require('express');
 const fs = require('fs');
-const path = require('path');
 
-// Load credentials from ENV (Render compatible)
+// 🌐 Keep Render instance alive
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('🤖 WhatsApp bot is running and ready!');
+});
+
+app.listen(PORT, () => {
+  console.log(`🌐 Server is listening on port ${PORT}`);
+});
+
+// 📦 Google Service Account Credentials from ENV
 const credsBase64 = process.env.CREDS_BASE64;
-const credsJson = Buffer.from(credsBase64, 'base64').toString('utf8');
-const credentials = JSON.parse(credsJson);
 
-// Google Sheets setup
+if (!credsBase64) {
+  console.error("❌ CREDS_BASE64 not found in environment variables.");
+  process.exit(1);
+}
+
+let credentials;
+
+try {
+  const credsJson = Buffer.from(credsBase64, 'base64').toString('utf8');
+  credentials = JSON.parse(credsJson);
+} catch (error) {
+  console.error("❌ Failed to parse credentials JSON:", error.message);
+  process.exit(1);
+}
+
+// 📊 Google Sheets API Setup
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const auth = new google.auth.JWT(
   credentials.client_email,
@@ -18,9 +47,10 @@ const auth = new google.auth.JWT(
 );
 const sheets = google.sheets({ version: 'v4', auth });
 
-const SPREADSHEET_ID = '1kzRUlafAHKovzyReVAUkk5lmbik36VYP1Ao_pQiezMQ'; // Replace this with your actual Sheet ID
+// 📄 Google Sheet ID (Make sure it's shared with the service account!)
+const SPREADSHEET_ID = '1kzRUlafAHKovzyReVAUkk5lmbik36VYP1Ao_pQiezMQ'; // <- Replace if needed
 
-// WhatsApp setup
+// 📱 WhatsApp Client Setup
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
@@ -44,12 +74,10 @@ client.on('message', async (msg) => {
     const message = msg.body;
     const timestamp = new Date().toLocaleString();
 
-    // Skip status messages or empty messages
     if (!message || phoneNumber.includes('status@')) return;
 
     console.log(`📩 ${phoneNumber}: ${message}`);
 
-    // Save to Google Sheets
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: 'Sheet1!A:C',
@@ -66,6 +94,3 @@ client.on('message', async (msg) => {
 });
 
 client.initialize();
-
-
-
