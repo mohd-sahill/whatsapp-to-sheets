@@ -1,6 +1,5 @@
 // index.js
 
-require('dotenv').config(); // Load .env locally (safe in development)
 
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { google } = require('googleapis');
