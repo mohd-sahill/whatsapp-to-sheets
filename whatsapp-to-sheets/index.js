@@ -22,7 +22,7 @@ const auth = new google.auth.JWT(
   SCOPES
 );
 const sheets = google.sheets({ version: 'v4', auth });
-const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'; // Replace with your actual Google Sheet ID
+const SPREADSHEET_ID = '1kzRUlafAHKovzyReVAUkk5lmbik36VYP1Ao_pQiezMQ'; // Replace with your actual Google Sheet ID
 
 // Initialize WhatsApp
 const client = new Client({
