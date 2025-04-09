@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { google } = require('googleapis');
 const qrcode = require('qrcode-terminal'); // For scannable QR
