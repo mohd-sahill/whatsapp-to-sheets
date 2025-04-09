@@ -1,2 +1,4 @@
-2025/04/09-06:55:41.362 57b8 Creating DB C:\Users\moham\OneDrive\Desktop\Whatsapp_bot\whatsapp-to-sheets\.wwebjs_auth\session\Default\Local Storage\leveldb since it was missing.
-2025/04/09-06:55:41.369 57b8 Reusing MANIFEST C:\Users\moham\OneDrive\Desktop\Whatsapp_bot\whatsapp-to-sheets\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/04/09-07:13:28.593 28ac Creating DB C:\Users\moham\OneDrive\Desktop\Whatsapp_bot\whatsapp-to-sheets\.wwebjs_auth\session\Default\Local Storage\leveldb since it was missing.
+2025/04/09-07:13:28.606 28ac Reusing MANIFEST C:\Users\moham\OneDrive\Desktop\Whatsapp_bot\whatsapp-to-sheets\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/04/09-07:13:28.607 28ac Recovering log #3
+2025/04/09-07:13:28.608 28ac Reusing old log C:\Users\moham\OneDrive\Desktop\Whatsapp_bot\whatsapp-to-sheets\.wwebjs_auth\session\Default\Local Storage\leveldb/000003.log 
