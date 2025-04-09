@@ -1,42 +1,14 @@
-// index.js
-
-
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { google } = require('googleapis');
-const express = require('express');
-const fs = require('fs');
+const qrcode = require('qrcode-terminal'); // For scannable QR
+const express = require('express'); // Keep Render happy (optional web server)
 
-// 🌐 Keep Render instance alive
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.send('🤖 WhatsApp bot is running and ready!');
-});
-
-app.listen(PORT, () => {
-  console.log(`🌐 Server is listening on port ${PORT}`);
-});
-
-// 📦 Google Service Account Credentials from ENV
+// Load credentials from base64 ENV
 const credsBase64 = process.env.CREDS_BASE64;
+const credsJson = Buffer.from(credsBase64, 'base64').toString('utf8');
+const credentials = JSON.parse(credsJson);
 
-if (!credsBase64) {
-  console.error("❌ CREDS_BASE64 not found in environment variables.");
-  process.exit(1);
-}
-
-let credentials;
-
-try {
-  const credsJson = Buffer.from(credsBase64, 'base64').toString('utf8');
-  credentials = JSON.parse(credsJson);
-} catch (error) {
-  console.error("❌ Failed to parse credentials JSON:", error.message);
-  process.exit(1);
-}
-
-// 📊 Google Sheets API Setup
+// Google Sheets API setup
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const auth = new google.auth.JWT(
   credentials.client_email,
@@ -45,11 +17,9 @@ const auth = new google.auth.JWT(
   SCOPES
 );
 const sheets = google.sheets({ version: 'v4', auth });
+const SPREADSHEET_ID = '1kzRUlafAHKovzyReVAUkk5lmbik36VYP1Ao_pQiezMQ'; // Replace with your Sheet ID
 
-// 📄 Google Sheet ID (Make sure it's shared with the service account!)
-const SPREADSHEET_ID = '1kzRUlafAHKovzyReVAUkk5lmbik36VYP1Ao_pQiezMQ'; // <- Replace if needed
-
-// 📱 WhatsApp Client Setup
+// WhatsApp client setup
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
@@ -58,9 +28,11 @@ const client = new Client({
   },
 });
 
+// Show scannable QR code in terminal
 client.on('qr', (qr) => {
-  console.log('📱 Scan this QR code with your WhatsApp:');
-  console.log(qr);
+  console.clear();
+  console.log('\n📲 Scan this QR code with your phone:\n');
+  qrcode.generate(qr, { small: true });
 });
 
 client.on('ready', () => {
@@ -73,6 +45,7 @@ client.on('message', async (msg) => {
     const message = msg.body;
     const timestamp = new Date().toLocaleString();
 
+    // Skip system/status messages
     if (!message || phoneNumber.includes('status@')) return;
 
     console.log(`📩 ${phoneNumber}: ${message}`);
@@ -86,10 +59,17 @@ client.on('message', async (msg) => {
       },
     });
 
-    console.log('✅ Saved to Google Sheets!');
+    console.log('✅ Message logged to Google Sheets!');
   } catch (error) {
-    console.error('❌ Failed to save to Google Sheets:', error);
+    console.error('❌ Failed to log message:', error);
   }
 });
 
 client.initialize();
+
+// Optional: Keep Render deployment running
+const app = express();
+app.get('/', (req, res) => res.send('✅ Bot is running!'));
+app.listen(10000, () => {
+  console.log('🌍 Server is listening on port 10000');
+});
